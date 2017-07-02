@@ -6,7 +6,7 @@ import util.TextArrayWritable;
  */
 public class MyCSVParser extends CSVParser {
 
-    private Character separator = ' ';
+    private Character separator = ',';
 
     public MyCSVParser(Character separator) {
         this.separator = separator;
@@ -14,13 +14,18 @@ public class MyCSVParser extends CSVParser {
 
     @Override
     public String[] parseInLine(String line) {
-        // TODO: 17-7-1
-        return new String[0];
+        return line.split(separator+"");
     }
 
     @Override
     public String parseOutLine(TextArrayWritable value) {
-        // TODO: 17-7-1
-        return null;
+        StringBuilder stringBuilder = new StringBuilder();
+        int i = 0;
+        for (; i < value.get().length-1; i++) {
+            stringBuilder.append(value.get()[i].toString());
+            stringBuilder.append(separator);
+        }
+        stringBuilder.append(value.get()[i].toString());
+        return stringBuilder.toString();
     }
 }
