@@ -1,3 +1,5 @@
+package util;
+
 import util.CSVParser;
 import util.TextArrayWritable;
 
@@ -8,8 +10,7 @@ public class MyCSVParser extends CSVParser {
 
     private Character separator = ',';
 
-    public MyCSVParser(Character separator) {
-        this.separator = separator;
+    public MyCSVParser() {
     }
 
     @Override

@@ -9,18 +9,40 @@ public class CaseFactory {
 
     public static Case getCase(Text[] texts) {
         Case a = new Case();
+        //user_id
         a.userID = Integer.parseInt(texts[0].toString());
+        //merchant_id
         a.merchantID = texts[1].toString();
+        //action
         a.action = Integer.parseInt(texts[2].toString());
-        try {
-            a.couponID = Integer.parseInt(texts[3].toString());
-        }catch (Exception e){
-            //couponID = fixed
-            a.couponID = 1;
+        //coupon_id,discount_rate,date_receive
+        if ("null".equals(texts[3].toString())){
+            a.couponID=0;
+            a.discountRate="";
+            a.dateReceive="";
+        }else {
+            try {
+                a.couponID = Integer.parseInt(texts[3].toString());
+            }catch (Exception e){
+                //couponID = fixed
+                a.couponID = 1;
+            }
+
+            try {
+                a.discountRate = texts[4].toString();
+            } catch (Exception e) {
+                //discount_rate = fixed
+                e.printStackTrace();
+            }
+
+            a.dateReceive = texts[5].toString();
         }
-        a.discountRate = texts[4].toString();
-        a.dateReceive = texts[5].toString();
+
         a.date = texts[6].toString();
+        if ("null".equals(a.date)){
+            a.date = "";
+        }
+
         return a;
     }
 
@@ -45,23 +67,23 @@ public class CaseFactory {
      * 输出格式：
      * feature1
      */
-    public static long[] getFeatures(Case aCase) {
+    public static String[] getFeatures(Case aCase) {
 
-        long[] features = new long[11];
+        String[] features = new String[11];
 
-        features[0] = Long.parseLong(aCase.userID+aCase.merchantID);
-        features[1] = Long.parseLong(""+aCase.userID+aCase.action);
-        features[2] = Long.parseLong(aCase.userID+aCase.dateReceive);
-        features[3] = Long.parseLong(aCase.userID+aCase.date);
+        features[0] = aCase.userID+aCase.merchantID;
+        features[1] = ""+aCase.userID+aCase.action;
+        features[2] = aCase.userID+aCase.dateReceive;
+        features[3] = aCase.userID+aCase.date;
 
-        features[4] = Long.parseLong(aCase.merchantID+aCase.couponID);
-        features[5] = Long.parseLong(aCase.merchantID+parseDiscountRate(aCase.discountRate));
-        features[6] = Long.parseLong(aCase.merchantID+aCase.dateReceive);
-        features[7] = Long.parseLong(aCase.merchantID+aCase.date);
+        features[4] = aCase.merchantID+aCase.couponID;
+        features[5] = aCase.merchantID+parseDiscountRate(aCase.discountRate);
+        features[6] = aCase.merchantID+aCase.dateReceive;
+        features[7] = aCase.merchantID+aCase.date;
 
-        features[8] = Long.parseLong(""+aCase.couponID+parseDiscountRate(aCase.discountRate));
-        features[9] = Long.parseLong(aCase.couponID+aCase.dateReceive);
-        features[10] = Long.parseLong(aCase.couponID+aCase.date);
+        features[8] = ""+aCase.couponID+parseDiscountRate(aCase.discountRate);
+        features[9] = aCase.couponID+aCase.dateReceive;
+        features[10] = aCase.couponID+aCase.date;
 
         return features;
     }

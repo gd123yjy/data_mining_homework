@@ -5,6 +5,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.GzipCodec;
 import org.apache.hadoop.mapred.JobConf;
@@ -20,22 +21,22 @@ import java.io.IOException;
 
 /**
  * Created by yjy on 17-7-1.
+ *
+ * key 空字符
+ * value 各字段的值
+ * SEPERATOR 无
  */
-public class CSVOutputFormat extends FileOutputFormat<LongWritable, TextArrayWritable> {
+public class CSVOutputFormat extends FileOutputFormat<Text, TextArrayWritable> {
 
     public static String SEPERATOR = "mapreduce.output.csvoutputformat.separator";
 
-    private CSVParser parser;
-
-    public void setParser(CSVParser parser) {
-        this.parser = parser;
-    }
+    private CSVParser parser=new MyCSVParser();
 
     @Override
-    public org.apache.hadoop.mapreduce.RecordWriter<LongWritable, TextArrayWritable> getRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
+    public org.apache.hadoop.mapreduce.RecordWriter<Text, TextArrayWritable> getRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
         Configuration conf = job.getConfiguration();
         boolean isCompressed = getCompressOutput(job);
-        String keyValueSeparator = conf.get(SEPERATOR, ",");
+        String keyValueSeparator = conf.get(SEPERATOR, "");
         CompressionCodec codec = null;
         String extension = "";
         if(isCompressed) {

@@ -45,10 +45,7 @@ public class CSVInputFormat extends FileInputFormat<LongWritable, TextArrayWrita
     public RecordReader<LongWritable, TextArrayWritable> createRecordReader(
             InputSplit split, TaskAttemptContext context)
             throws IOException, InterruptedException {
-        return new CSVRecordReader(this.parser);
+        return new CSVRecordReader();
     }
 
-    public void setParser(CSVParser parser) {
-        this.parser = parser;
-    }
 }

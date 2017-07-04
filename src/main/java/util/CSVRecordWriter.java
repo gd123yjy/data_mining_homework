@@ -17,7 +17,7 @@ import java.io.UnsupportedEncodingException;
 /**
  * Created by yjy on 17-7-1.
  */
-public class CSVRecordWriter extends RecordWriter<LongWritable, TextArrayWritable> {
+public class CSVRecordWriter extends RecordWriter<Text, TextArrayWritable> {
 
     private final static byte[] newline;
     private CSVParser parser;
@@ -31,7 +31,7 @@ public class CSVRecordWriter extends RecordWriter<LongWritable, TextArrayWritabl
         this.keyValueSeparator = keyValueSeparator.getBytes();
     }
 
-    public void write(LongWritable key, TextArrayWritable value) throws IOException {
+    public void write(Text key, TextArrayWritable value) throws IOException {
 
         boolean nullKey = key == null;
         boolean nullValue = value == null;

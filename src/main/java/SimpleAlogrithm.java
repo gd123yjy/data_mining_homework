@@ -6,9 +6,12 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import util.CSVInputFormat;
 import util.CSVOutputFormat;
 import util.TextArrayWritable;
@@ -50,22 +53,30 @@ import java.util.HashMap;
  * 一张优惠券第一天买第二天就用了，那么下次这个用户对于同一家商户同样折扣率的优惠券是不是有更高可能性会核销，
  * 诸如此类的特征组合非常多，本题排名第一的好像搞了30多个特征，不过这样提取特征值问题太难了我搞不定；
  *
+ *
+ * 网上查找这道题的做法，说是二分类问题。然而本题要求输出的是概率而不是“会不会”，所以我不知道怎么用二分类来做。自己选择算法。
+ * 大家都是用的Python作答，用XGBoost建模，然而我完全不懂，就照着书来了。
+ * 特征值的分析提取是最关键的一环。没有什么大数据的经验不太懂如何提取特征值。网上的思路好像提取了30多个特征，有些还是看都看不懂的，有些是能理解但是不知道如何实现的。最后根据自己的理解提取了11个特征。
  * */
 
 public class SimpleAlogrithm {
 
-    public void run(String inputDataPath,String outputDataPath) throws IOException, ClassNotFoundException, InterruptedException {
+    public static void run(String inputDataPath,String outputDataPath) throws IOException, ClassNotFoundException, InterruptedException {
         Configuration conf = new Configuration();
         conf.set("mapreduce.job.tracker","hdfs://127.0.0.1:8001");
 
         Job job = Job.getInstance(conf, "coupon");
-        job.setJarByClass(SimpleAlogrithm.class);
+        job.setJarByClass(Main.class);
         job.setMapperClass(SimpleAlogrithm.LSHMapper.class);
-        //job.setCombinerClass(SimpleAlogrithm.IntSumReducer.class);
+        job.setCombinerClass(SimpleAlogrithm.SimilarReducer.class);
         job.setReducerClass(SimpleAlogrithm.SimilarReducer.class);
-        job.setOutputKeyClass(Case.class);
-        job.setOutputValueClass(FloatWritable.class);
 
+        job.setInputFormatClass(CSVInputFormat.class);
+        job.setOutputFormatClass(CSVOutputFormat.class);
+/*
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(TextArrayWritable.class);
+*/
         CSVInputFormat.addInputPath(job, new Path(inputDataPath));
         CSVOutputFormat.setOutputPath(job, new Path(outputDataPath));
 
@@ -74,9 +85,9 @@ public class SimpleAlogrithm {
 
     /**
      * 输入：行号，记录
-     * 输出：hashcode，case
+     * 输出：hashcode，记录
      */
-    static class LSHMapper extends Mapper<LongWritable, TextArrayWritable, LongWritable, Case> {
+    static class LSHMapper extends Mapper<LongWritable, TextArrayWritable, Text, TextArrayWritable> {
 
         private static LSHStrategy lsh = new LSHStrategy();
 
@@ -86,46 +97,52 @@ public class SimpleAlogrithm {
             Text[] texts = (Text[]) value.get();
             Case aCase = CaseFactory.getCase(texts);
             lsh.setRecord(CaseFactory.getFeatures(aCase));
-            context.write(lsh.hash(),aCase);
+            String hashCode = lsh.hash();
+            context.write(new Text(hashCode),value);
         }
     }
 
     /**
-     * 输入：hashcode，case
-     * 输出：CaseForResult，核销概率
+     * 输入：hashcode，record
+     * 输出：""，record+核销概率
      */
-    static class SimilarReducer extends Reducer<LongWritable,Case, CaseForResult,FloatWritable> {
+    static class SimilarReducer extends Reducer<Text,TextArrayWritable, Text,TextArrayWritable> {
 
         private static DateFormat dateFormat = new SimpleDateFormat("yyMMdd");
-        private static Date date_20160701 ;
+        private static Date date_20160615 ;
+        private static final Text emptyText = new Text("");
 
         static {
             try {
-                date_20160701 = dateFormat.parse("20160701");
+                date_20160615 = dateFormat.parse("20160615");
             } catch (ParseException e) {
                 e.printStackTrace();
             }
         }
 
         @Override
-        protected void reduce(LongWritable key, Iterable<Case> values, Context context) throws IOException, InterruptedException {
+        protected void reduce(Text key, Iterable<TextArrayWritable> values, Context context) throws IOException, InterruptedException {
 
             //具有同个key的case有可能相似
             //计算和当前value最相似的记录，然后输出
-            for (Case aCase:
+            for (TextArrayWritable arrayWritable:
                  values) {
+                Case aCase = CaseFactory.getCase((Text[]) arrayWritable.get());
                 Date date = null ;
                 try {
-                    date = dateFormat.parse((aCase.date)) ;
+                    date = dateFormat.parse((aCase.dateReceive)) ;
                 } catch (ParseException e) {
                     e.printStackTrace();
                     continue;
                 }
-                if (date.after(date_20160701)){
+                if (date.after(date_20160615)){
                     //2016年7月1日之后的数据，需要我们猜测核销概率
                     HashMap<Case,Integer> similarCase = new SimilarFinder(aCase,values).find(5);
                     float couponVerfiedProbility = new ProbilityCalculator(similarCase).calculate();
-                    context.write(new CaseForResult(aCase.userID,aCase.couponID,aCase.dateReceive),new FloatWritable(couponVerfiedProbility));
+                    Writable[] record = arrayWritable.get();
+                    Writable[] writables={record[0],record[1],record[5],new FloatWritable(couponVerfiedProbility)};
+                    arrayWritable.set(writables);
+                    context.write(emptyText,arrayWritable);
                 }
             }
         }

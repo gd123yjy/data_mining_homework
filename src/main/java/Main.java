@@ -4,7 +4,7 @@
 public class Main {
 
     public static void main(String[] args) throws Exception {
-        new SimpleAlogrithm().run("/user/yjy/ccf_online_stage1_train.csv","/user/yjy/result.csv");
+        SimpleAlogrithm.run("hdfs://localhost:9000/user/yjy/ccf_online_stage1_train.csv","hdfs://localhost:9000/user/yjy/couponOutput");
     }
 
 }

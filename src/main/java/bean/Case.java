@@ -11,7 +11,7 @@ import java.io.Serializable;
 /**
  * Created by yjy on 17-7-2.
  */
-public class Case implements Writable,Serializable {
+public class Case implements Writable {
 
     public int userID;
     public String merchantID;
@@ -33,22 +33,19 @@ public class Case implements Writable,Serializable {
     }
 
     public void write(DataOutput dataOutput) throws IOException {
-        dataOutput.write(ObjectAndBytes.toByteArray(this));
+        dataOutput.write(toString().getBytes());
     }
 
     public void readFields(DataInput in) throws IOException {
         int count = in.readInt();
 
-        byte[] data=new byte[count];
-        in.readFully(data);
-        Case aCase = (Case) ObjectAndBytes.toObject(data);
-
-        this.userID=aCase.userID;
-        this.merchantID=new String(aCase.merchantID);
-        this.action=aCase.action;
-        this.couponID=aCase.couponID;
-        this.discountRate=new String(aCase.discountRate);
-        this.dateReceive=new String(aCase.dateReceive);
-        this.date=new String(aCase.date);
+        String[] strings = in.readLine().split(",");
+        this.userID=Integer.parseInt(strings[0]);
+        this.merchantID=strings[1];
+        this.action=Integer.parseInt(strings[2]);
+        this.couponID=Integer.parseInt(strings[3]);
+        this.discountRate=strings[4];
+        this.dateReceive=strings[5];
+        this.date=strings[6];
     }
 }

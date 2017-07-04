@@ -20,10 +20,9 @@ public class CSVRecordReader
     private CSVParser parser;
 
     // 新建CSVParser实例，用来解析每一行CSV文件的每一行
-    public CSVRecordReader(CSVParser parser) {
+    public CSVRecordReader() {
         this.lineReader = new LineRecordReader();
-        if (parser==null) throw new IllegalArgumentException("parser cannot be null");
-        this.parser = parser;
+        this.parser = new MyCSVParser();
     }
 
     // 调用LineRecordReader的初始化方法，寻找分片的开始位置

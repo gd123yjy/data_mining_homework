@@ -1,5 +1,7 @@
 import bean.Case;
 import bean.CaseFactory;
+import org.apache.hadoop.io.Text;
+import util.TextArrayWritable;
 
 import java.util.HashMap;
 import java.util.TreeSet;
@@ -11,13 +13,13 @@ import java.util.TreeSet;
 public class SimilarFinder {
 
     private Case aCase;
-    private Iterable<Case> values;
+    private Iterable<TextArrayWritable> values;
     /**
      *
      * @param aCase current case
      * @param values similar gross
      */
-    public SimilarFinder(Case aCase, Iterable<Case> values) {
+    public SimilarFinder(Case aCase, Iterable<TextArrayWritable> values) {
         this.aCase = aCase;
         this.values = values;
     }
@@ -29,8 +31,9 @@ public class SimilarFinder {
      */
     public HashMap<Case, Integer> find(int i) {
         TreeSet<Integer> treeSet = null;
-        for (Case record :
+        for (TextArrayWritable writable :
                 values) {
+            Case record = CaseFactory.getCase((Text[]) writable.get());
             if (aCase.equals(record)){
                 //过滤自己和自己相似的情况
                 continue;
